@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:idcardku/model/response_model.dart';
+import 'package:idcardku/model/user_model.dart';
 import 'package:idcardku/screens/otp_screen.dart';
 import 'package:idcardku/screens/register_screen.dart';
 
@@ -40,9 +41,13 @@ class _LoginPageState extends State<LoginPage> {
     final response = APIResponse.fromJson(parseResponse);
 
     if (response.code == 200) {
+      final user = User.fromJson(response.data);
+
       Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (context) => const OTPPage(),
+          builder: (context) => OTPPage(
+            user: user,
+          ),
         ),
       );
     } else {

@@ -3,45 +3,56 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:idcardku/model/response_model.dart';
+import 'package:idcardku/model/user_model.dart';
+import 'package:idcardku/screens/home_screen.dart';
 
 class OTPPage extends StatefulWidget {
-  const OTPPage({super.key});
+  final User user;
+
+  const OTPPage({super.key, required this.user});
 
   @override
   State<OTPPage> createState() => _OTPPageState();
 }
 
 class _OTPPageState extends State<OTPPage> {
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
+  final codeController = TextEditingController();
 
   String errorMessage = "";
+  bool loading = false;
 
-  Future<void> login() async {
+  Future<void> verify() async {
     setState(() {
       errorMessage = "";
+      loading = true;
     });
 
     final rawResponse = await http.post(
-      Uri.parse("https://mwsapi.safatanc.com/auth/login"),
+      Uri.parse("https://mwsapi.safatanc.com/auth/otp"),
       body: jsonEncode(
-        {
-          "username": usernameController.text,
-          "password": passwordController.text
-        },
+        {"username": widget.user.username, "code": codeController.text},
       ),
     );
 
     final Map parseResponse = json.decode(rawResponse.body);
+
     final response = APIResponse.fromJson(parseResponse);
 
     if (response.code == 200) {
-      // IMPLEMENT
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => HomePage(user: widget.user),
+        ),
+      );
     } else {
       setState(() {
         errorMessage = response.message;
       });
     }
+
+    setState(() {
+      loading = false;
+    });
   }
 
   @override
@@ -50,11 +61,10 @@ class _OTPPageState extends State<OTPPage> {
       appBar: AppBar(
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
-        title: const Center(
-            child: Text(
-          "Welcome",
+        title: const Text(
+          "Verify Account",
           style: TextStyle(fontWeight: FontWeight.w500),
-        )),
+        ),
       ),
       body: Column(
         children: [
@@ -64,6 +74,15 @@ class _OTPPageState extends State<OTPPage> {
           const Text(
             "Verify Account",
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          ),
+          Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+              child: Text(
+                "Hi ${widget.user.fullName}, please check your WhatsApp (${widget.user.phone}) to get single use code.",
+                textAlign: TextAlign.center,
+              ),
+            ),
           ),
           const SizedBox(
             height: 8,
@@ -85,10 +104,20 @@ class _OTPPageState extends State<OTPPage> {
                     ),
                     hintText: "4 digit code",
                   ),
-                  controller: usernameController,
+                  controller: codeController,
+                  textAlign: TextAlign.center,
                 ),
               ),
             ),
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+            child: errorMessage != ""
+                ? Text(
+                    "Error: $errorMessage",
+                    style: const TextStyle(color: Colors.pink),
+                  )
+                : const SizedBox(),
           ),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -100,14 +129,15 @@ class _OTPPageState extends State<OTPPage> {
               width: MediaQuery.sizeOf(context).width,
               child: TextButton(
                 onPressed: () {
-                  login();
+                  verify();
                 },
                 style: const ButtonStyle(
                   foregroundColor: WidgetStatePropertyAll(Colors.white),
                 ),
-                child: const Text(
-                  "OTP",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                child: Text(
+                  loading == false ? "Verify" : "Loading...",
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ),
