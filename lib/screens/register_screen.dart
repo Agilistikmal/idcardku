@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:idcardku/config.dart';
 import 'package:idcardku/main.dart';
 import 'package:idcardku/model/response_model.dart';
+import 'package:idcardku/screens/otp_screen.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -14,6 +15,9 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
+  String errorMessage = "";
+  bool loading = false;
+
   @override
   Widget build(BuildContext context) {
     final appState = AppStateProvider.of(context)?.state;
@@ -23,11 +27,10 @@ class _RegisterPageState extends State<RegisterPage> {
     final phoneController = TextEditingController();
     final passwordController = TextEditingController();
 
-    String errorMessage = "";
-
     Future<void> register() async {
       setState(() {
         errorMessage = "";
+        loading = true;
       });
 
       final rawResponse = await http.post(
@@ -47,12 +50,21 @@ class _RegisterPageState extends State<RegisterPage> {
 
       if (response.code == 200) {
         appState?.username = usernameController.text;
-        Navigator.of(context).pop();
+
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => const OTPPage(),
+          ),
+        );
       } else {
         setState(() {
           errorMessage = response.message;
         });
       }
+
+      setState(() {
+        loading = false;
+      });
     }
 
     return Scaffold(
@@ -207,9 +219,10 @@ class _RegisterPageState extends State<RegisterPage> {
                 style: const ButtonStyle(
                   foregroundColor: WidgetStatePropertyAll(Colors.white),
                 ),
-                child: const Text(
-                  "Register",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                child: Text(
+                  loading == true ? "Loading..." : "Register",
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
             ),

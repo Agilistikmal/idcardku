@@ -16,14 +16,14 @@ class OTPPage extends StatefulWidget {
 }
 
 class _OTPPageState extends State<OTPPage> {
+  String errorMessage = "";
+  bool loading = false;
+
   @override
   Widget build(BuildContext context) {
     final appState = AppStateProvider.of(context)?.state;
 
     final codeController = TextEditingController();
-
-    String errorMessage = "";
-    bool loading = false;
 
     Future<void> verify() async {
       setState(() {

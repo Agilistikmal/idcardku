@@ -70,6 +70,11 @@ class _LoginPageState extends State<LoginPage> {
           errorMessage = "Login timeout, please try again.";
           loading = false;
         });
+      } catch (e) {
+        setState(() {
+          errorMessage = "Failed to login, please try again";
+          loading = false;
+        });
       }
 
       setState(() {

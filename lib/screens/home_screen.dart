@@ -7,6 +7,7 @@ import 'package:idcardku/main.dart';
 import 'package:idcardku/model/payment_model.dart';
 import 'package:idcardku/model/response_model.dart';
 import 'package:idcardku/model/user_model.dart';
+import 'package:idcardku/screens/login_screen.dart';
 import 'package:idcardku/screens/payment_screen.dart';
 import 'package:idcardku/service/user_service.dart';
 
@@ -70,6 +71,37 @@ class _HomePageState extends State<HomePage> {
 
       User user = await findUser(appState!.username!);
       appState.user = user;
+
+      setState(() {
+        loading = false;
+      });
+    }
+
+    Future<void> delete() async {
+      setState(() {
+        errorMessage = "";
+        loading = true;
+      });
+
+      final rawResponse = await http.delete(
+        Uri.parse("${AppConfig.apiUrl}/user/${appState!.username}"),
+      );
+
+      final Map parseResponse = json.decode(rawResponse.body);
+
+      final response = APIResponse.fromJson(parseResponse);
+
+      if (response.code == 200) {
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => const LoginPage(),
+          ),
+        );
+      } else {
+        setState(() {
+          errorMessage = response.message;
+        });
+      }
 
       setState(() {
         loading = false;
@@ -192,6 +224,30 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Text(
                           loading == false ? "Refresh Data" : "Loading...",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: Colors.red.shade50,
+                      ),
+                      width: MediaQuery.sizeOf(context).width,
+                      child: TextButton(
+                        onPressed: () {
+                          delete();
+                        },
+                        style: const ButtonStyle(
+                          foregroundColor: WidgetStatePropertyAll(Colors.red),
+                        ),
+                        child: Text(
+                          loading == false ? "Delete Data" : "Loading...",
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),
