@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:idcardku/config.dart';
+import 'package:idcardku/main.dart';
 import 'package:idcardku/model/response_model.dart';
 
 class RegisterPage extends StatefulWidget {
@@ -12,44 +14,47 @@ class RegisterPage extends StatefulWidget {
 }
 
 class _RegisterPageState extends State<RegisterPage> {
-  final usernameController = TextEditingController();
-  final fullNameController = TextEditingController();
-  final phoneController = TextEditingController();
-  final passwordController = TextEditingController();
-
-  String errorMessage = "";
-
-  Future<void> register() async {
-    setState(() {
-      errorMessage = "";
-    });
-
-    final rawResponse = await http.post(
-      Uri.parse("https://mwsapi.safatanc.com/auth/register"),
-      body: jsonEncode(
-        {
-          "username": usernameController.text,
-          "password": passwordController.text,
-          "full_name": fullNameController.text,
-          "phone": phoneController.text
-        },
-      ),
-    );
-
-    final Map parseResponse = json.decode(rawResponse.body);
-    final response = APIResponse.fromJson(parseResponse);
-
-    if (response.code == 200) {
-      Navigator.of(context).pop();
-    } else {
-      setState(() {
-        errorMessage = response.message;
-      });
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final appState = AppStateProvider.of(context)?.state;
+
+    final usernameController = TextEditingController();
+    final fullNameController = TextEditingController();
+    final phoneController = TextEditingController();
+    final passwordController = TextEditingController();
+
+    String errorMessage = "";
+
+    Future<void> register() async {
+      setState(() {
+        errorMessage = "";
+      });
+
+      final rawResponse = await http.post(
+        Uri.parse("${AppConfig.apiUrl}/auth/register"),
+        body: jsonEncode(
+          {
+            "username": usernameController.text,
+            "password": passwordController.text,
+            "full_name": fullNameController.text,
+            "phone": phoneController.text
+          },
+        ),
+      );
+
+      final Map parseResponse = json.decode(rawResponse.body);
+      final response = APIResponse.fromJson(parseResponse);
+
+      if (response.code == 200) {
+        appState?.username = usernameController.text;
+        Navigator.of(context).pop();
+      } else {
+        setState(() {
+          errorMessage = response.message;
+        });
+      }
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green,

@@ -1,9 +1,11 @@
+import 'dart:async';
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:idcardku/config.dart';
+import 'package:idcardku/main.dart';
 import 'package:idcardku/model/response_model.dart';
-import 'package:idcardku/model/user_model.dart';
 import 'package:idcardku/screens/otp_screen.dart';
 import 'package:idcardku/screens/register_screen.dart';
 
@@ -15,54 +17,66 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final usernameController = TextEditingController();
-  final passwordController = TextEditingController();
-
   String errorMessage = "";
   bool loading = false;
 
-  Future<void> login() async {
-    setState(() {
-      errorMessage = "";
-      loading = true;
-    });
+  @override
+  Widget build(BuildContext context) {
+    final appState = AppStateProvider.of(context)?.state;
 
-    final rawResponse = await http.post(
-      Uri.parse("https://mwsapi.safatanc.com/auth/login"),
-      body: jsonEncode(
-        {
-          "username": usernameController.text,
-          "password": passwordController.text
-        },
-      ),
-    );
+    final usernameController = TextEditingController();
+    final passwordController = TextEditingController();
 
-    final Map parseResponse = json.decode(rawResponse.body);
-    final response = APIResponse.fromJson(parseResponse);
-
-    if (response.code == 200) {
-      final user = User.fromJson(response.data);
-
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => OTPPage(
-            user: user,
-          ),
-        ),
-      );
-    } else {
+    Future<void> login() async {
       setState(() {
-        errorMessage = response.message;
+        errorMessage = "";
+        loading = true;
+      });
+
+      try {
+        final rawResponse = await http
+            .post(
+              Uri.parse("${AppConfig.apiUrl}/auth/login"),
+              body: jsonEncode(
+                {
+                  "username": usernameController.text,
+                  "password": passwordController.text
+                },
+              ),
+            )
+            .timeout(
+              const Duration(seconds: 10),
+            );
+
+        final Map parseResponse = json.decode(rawResponse.body);
+        final response = APIResponse.fromJson(parseResponse);
+
+        if (response.code == 200) {
+          appState?.username = usernameController.text;
+
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => const OTPPage(),
+            ),
+          );
+        } else {
+          setState(() {
+            errorMessage = response.message;
+            loading = false;
+          });
+        }
+      } on TimeoutException {
+        setState(() {
+          errorMessage = "Login timeout, please try again.";
+          loading = false;
+        });
+      }
+
+      setState(() {
+        loading = false;
       });
     }
 
-    setState(() {
-      loading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green,
@@ -87,8 +101,8 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(
             height: 24,
           ),
-          const Text(
-            "Login",
+          Text(
+            loading == true ? "Loading..." : "Login",
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(

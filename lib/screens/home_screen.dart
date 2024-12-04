@@ -2,65 +2,80 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:idcardku/config.dart';
+import 'package:idcardku/main.dart';
 import 'package:idcardku/model/payment_model.dart';
 import 'package:idcardku/model/response_model.dart';
 import 'package:idcardku/model/user_model.dart';
 import 'package:idcardku/screens/payment_screen.dart';
+import 'package:idcardku/service/user_service.dart';
 
 class HomePage extends StatefulWidget {
-  final User user;
-
-  const HomePage({super.key, required this.user});
+  const HomePage({super.key});
 
   @override
   State<HomePage> createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  final codeController = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    final appState = AppStateProvider.of(context)?.state;
 
-  String errorMessage = "";
-  bool loading = false;
+    String errorMessage = "";
+    bool loading = false;
 
-  Future<void> upgrade() async {
-    setState(() {
-      errorMessage = "";
-      loading = true;
-    });
+    Future<void> upgrade() async {
+      setState(() {
+        errorMessage = "";
+        loading = true;
+      });
 
-    final rawResponse = await http.post(
-      Uri.parse("https://mwsapi.safatanc.com/payment"),
-      body: jsonEncode(
-        {"username": widget.user.username, "amount": 1000},
-      ),
-    );
-
-    final Map parseResponse = json.decode(rawResponse.body);
-
-    final response = APIResponse.fromJson(parseResponse);
-
-    if (response.code == 200) {
-      final payment = Payment.fromJson(response.data);
-
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) =>
-              PaymentPage(user: widget.user, payment: payment),
+      final rawResponse = await http.post(
+        Uri.parse("${AppConfig.apiUrl}/payment"),
+        body: jsonEncode(
+          {"username": appState!.username!},
         ),
       );
-    } else {
+
+      final Map parseResponse = json.decode(rawResponse.body);
+
+      final response = APIResponse.fromJson(parseResponse);
+
+      if (response.code == 200) {
+        final payment = Payment.fromJson(response.data);
+
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) =>
+                PaymentPage(user: appState.user!, payment: payment),
+          ),
+        );
+      } else {
+        setState(() {
+          errorMessage = response.message;
+        });
+      }
+
       setState(() {
-        errorMessage = response.message;
+        loading = false;
       });
     }
 
-    setState(() {
-      loading = false;
-    });
-  }
+    Future<void> refresh() async {
+      setState(() {
+        errorMessage = "";
+        loading = true;
+      });
 
-  @override
-  Widget build(BuildContext context) {
+      User user = await findUser(appState!.username!);
+      appState.user = user;
+
+      setState(() {
+        loading = false;
+      });
+    }
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green,
@@ -77,10 +92,14 @@ class _HomePageState extends State<HomePage> {
               height: 24,
             ),
             Text(
-              widget.user.fullName,
+              appState!.user!.fullName,
               style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-            widget.user.verified == true
+            Text(appState.user!.phone),
+            const SizedBox(
+              height: 8,
+            ),
+            appState.user!.verified == true
                 ? Container(
                     decoration: BoxDecoration(
                       color: Colors.green,
@@ -90,7 +109,7 @@ class _HomePageState extends State<HomePage> {
                       padding:
                           EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                       child: Text(
-                        "Verified",
+                        "Verified Badge",
                         style: TextStyle(color: Colors.white),
                       ),
                     ),
@@ -106,7 +125,7 @@ class _HomePageState extends State<HomePage> {
                           padding:
                               EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                           child: Text(
-                            "Not Verified",
+                            "Non Verified Badge",
                             style: TextStyle(color: Colors.white),
                           ),
                         ),
@@ -123,7 +142,7 @@ class _HomePageState extends State<HomePage> {
                     )
                   : const SizedBox(),
             ),
-            widget.user.verified != true
+            appState.user!.verified != true
                 ? Padding(
                     padding:
                         const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
@@ -142,7 +161,7 @@ class _HomePageState extends State<HomePage> {
                         ),
                         child: Text(
                           loading == false
-                              ? "Upgrade to Verified Account"
+                              ? "Upgrade to get Verified Badge"
                               : "Loading...",
                           style: const TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
@@ -151,6 +170,40 @@ class _HomePageState extends State<HomePage> {
                     ),
                   )
                 : const SizedBox(),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Padding(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(24),
+                        color: Colors.green.shade50,
+                      ),
+                      width: MediaQuery.sizeOf(context).width,
+                      child: TextButton(
+                        onPressed: () {
+                          refresh();
+                        },
+                        style: const ButtonStyle(
+                          foregroundColor: WidgetStatePropertyAll(Colors.green),
+                        ),
+                        child: Text(
+                          loading == false ? "Refresh Data" : "Loading...",
+                          style: const TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(
+                    height: 24 * 2,
+                  )
+                ],
+              ),
+            )
           ],
         ),
       ),

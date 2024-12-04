@@ -2,61 +2,66 @@ import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:idcardku/config.dart';
+import 'package:idcardku/main.dart';
 import 'package:idcardku/model/response_model.dart';
 import 'package:idcardku/model/user_model.dart';
 import 'package:idcardku/screens/home_screen.dart';
 
 class OTPPage extends StatefulWidget {
-  final User user;
-
-  const OTPPage({super.key, required this.user});
+  const OTPPage({super.key});
 
   @override
   State<OTPPage> createState() => _OTPPageState();
 }
 
 class _OTPPageState extends State<OTPPage> {
-  final codeController = TextEditingController();
+  @override
+  Widget build(BuildContext context) {
+    final appState = AppStateProvider.of(context)?.state;
 
-  String errorMessage = "";
-  bool loading = false;
+    final codeController = TextEditingController();
 
-  Future<void> verify() async {
-    setState(() {
-      errorMessage = "";
-      loading = true;
-    });
+    String errorMessage = "";
+    bool loading = false;
 
-    final rawResponse = await http.post(
-      Uri.parse("https://mwsapi.safatanc.com/auth/otp"),
-      body: jsonEncode(
-        {"username": widget.user.username, "code": codeController.text},
-      ),
-    );
+    Future<void> verify() async {
+      setState(() {
+        errorMessage = "";
+        loading = true;
+      });
 
-    final Map parseResponse = json.decode(rawResponse.body);
-
-    final response = APIResponse.fromJson(parseResponse);
-
-    if (response.code == 200) {
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (context) => HomePage(user: widget.user),
+      final rawResponse = await http.post(
+        Uri.parse("${AppConfig.apiUrl}/auth/otp"),
+        body: jsonEncode(
+          {"username": appState!.username!, "code": codeController.text},
         ),
       );
-    } else {
+
+      final Map parseResponse = json.decode(rawResponse.body);
+
+      final response = APIResponse.fromJson(parseResponse);
+
+      if (response.code == 200) {
+        User user = User.fromJson(response.data);
+        appState.user = user;
+
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(
+            builder: (context) => HomePage(),
+          ),
+        );
+      } else {
+        setState(() {
+          errorMessage = response.message;
+        });
+      }
+
       setState(() {
-        errorMessage = response.message;
+        loading = false;
       });
     }
 
-    setState(() {
-      loading = false;
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.green,
@@ -79,7 +84,7 @@ class _OTPPageState extends State<OTPPage> {
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
               child: Text(
-                "Hi ${widget.user.fullName}, please check your WhatsApp (${widget.user.phone}) to get single use code.",
+                "Hi ${appState!.username!}, please check your WhatsApp to get single use code.",
                 textAlign: TextAlign.center,
               ),
             ),
