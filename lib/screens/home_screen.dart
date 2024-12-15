@@ -1,15 +1,10 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:idcardku/config.dart';
 import 'package:idcardku/main.dart';
-import 'package:idcardku/model/payment_model.dart';
-import 'package:idcardku/model/response_model.dart';
-import 'package:idcardku/model/user_model.dart';
-import 'package:idcardku/screens/login_screen.dart';
-import 'package:idcardku/screens/payment_screen.dart';
-import 'package:idcardku/service/user_service.dart';
+import 'package:idcardku/model/post_model.dart';
+import 'package:idcardku/screens/account_screen.dart';
+import 'package:idcardku/service/post_service.dart';
+import 'package:intl/intl.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -19,94 +14,18 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
+  Future<List<Post>> postsFuture = findPosts();
+
+  final _formKey = GlobalKey<FormState>();
+  final titleController = TextEditingController();
+  final contentController = TextEditingController();
+
+  String errorMessage = "";
+  bool loading = false;
+
   @override
   Widget build(BuildContext context) {
     final appState = AppStateProvider.of(context)?.state;
-
-    String errorMessage = "";
-    bool loading = false;
-
-    Future<void> upgrade() async {
-      setState(() {
-        errorMessage = "";
-        loading = true;
-      });
-
-      final rawResponse = await http.post(
-        Uri.parse("${AppConfig.apiUrl}/payment"),
-        body: jsonEncode(
-          {"username": appState!.username!},
-        ),
-      );
-
-      final Map parseResponse = json.decode(rawResponse.body);
-
-      final response = APIResponse.fromJson(parseResponse);
-
-      if (response.code == 200) {
-        final payment = Payment.fromJson(response.data);
-
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) =>
-                PaymentPage(user: appState.user!, payment: payment),
-          ),
-        );
-      } else {
-        setState(() {
-          errorMessage = response.message;
-        });
-      }
-
-      setState(() {
-        loading = false;
-      });
-    }
-
-    Future<void> refresh() async {
-      setState(() {
-        errorMessage = "";
-        loading = true;
-      });
-
-      User user = await findUser(appState!.username!);
-      appState.user = user;
-
-      setState(() {
-        loading = false;
-      });
-    }
-
-    Future<void> delete() async {
-      setState(() {
-        errorMessage = "";
-        loading = true;
-      });
-
-      final rawResponse = await http.delete(
-        Uri.parse("${AppConfig.apiUrl}/user/${appState!.username}"),
-      );
-
-      final Map parseResponse = json.decode(rawResponse.body);
-
-      final response = APIResponse.fromJson(parseResponse);
-
-      if (response.code == 200) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(
-            builder: (context) => const LoginPage(),
-          ),
-        );
-      } else {
-        setState(() {
-          errorMessage = response.message;
-        });
-      }
-
-      setState(() {
-        loading = false;
-      });
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -119,149 +38,295 @@ class _HomePageState extends State<HomePage> {
       ),
       body: Center(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const SizedBox(
               height: 24,
             ),
-            Text(
-              appState!.user!.fullName,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        appState!.user!.fullName,
+                        style: const TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(
+                        width: 8,
+                      ),
+                      appState.user!.verified == true
+                          ? Container(
+                              decoration: BoxDecoration(
+                                color: Colors.green,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                child: Text(
+                                  "Greenmark",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            )
+                          : Container(
+                              decoration: BoxDecoration(
+                                color: Colors.grey,
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: const Padding(
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: 16, vertical: 4),
+                                child: Text(
+                                  "Standard User",
+                                  style: TextStyle(color: Colors.white),
+                                ),
+                              ),
+                            ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: () {},
+                    icon: const Icon(
+                      Icons.edit,
+                      color: Colors.green,
+                    ),
+                  )
+                ],
+              ),
             ),
-            Text(appState.user!.phone),
             const SizedBox(
               height: 8,
             ),
-            appState.user!.verified == true
-                ? Container(
+            Column(
+              children: [
+                Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                  child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.green,
                       borderRadius: BorderRadius.circular(24),
+                      color: Colors.black12,
                     ),
-                    child: const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                      child: Text(
-                        "Verified Badge",
-                        style: TextStyle(color: Colors.white),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 24, vertical: 8),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          children: [
+                            TextFormField(
+                              decoration: const InputDecoration(
+                                border: UnderlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                ),
+                                hintText: "Post Title",
+                                labelText: "Post Title",
+                                contentPadding: EdgeInsets.all(0),
+                              ),
+                              controller: titleController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please enter post title";
+                                }
+                                return null;
+                              },
+                            ),
+                            TextFormField(
+                              decoration: const InputDecoration(
+                                border: UnderlineInputBorder(
+                                  borderSide: BorderSide.none,
+                                ),
+                                hintText: "Post Content",
+                                labelText: "Post Content",
+                                contentPadding: EdgeInsets.all(0),
+                              ),
+                              controller: contentController,
+                              validator: (value) {
+                                if (value == null || value.isEmpty) {
+                                  return "Please enter post content";
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(
+                              height: 8,
+                            ),
+                            TextButton(
+                              onPressed: () async {
+                                if (_formKey.currentState!.validate()) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text("Creating Post..."),
+                                    ),
+                                  );
+
+                                  try {
+                                    await createPost(
+                                      titleController.text,
+                                      contentController.text,
+                                      appState.username!,
+                                    );
+                                  } catch (err) {
+                                    setState(() {
+                                      errorMessage = err.toString();
+                                    });
+                                  }
+
+                                  postsFuture = findPosts();
+                                }
+                              },
+                              style: const ButtonStyle(
+                                foregroundColor: WidgetStatePropertyAll(
+                                  Colors.white,
+                                ),
+                                backgroundColor: WidgetStatePropertyAll(
+                                  Colors.green,
+                                ),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.send,
+                                  ),
+                                  SizedBox(
+                                    width: 8,
+                                  ),
+                                  Text(
+                                    "Send",
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                  )
-                : Column(
-                    children: [
-                      Container(
-                        decoration: BoxDecoration(
-                          color: Colors.red,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: const Padding(
-                          padding:
-                              EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                          child: Text(
-                            "Non Verified Badge",
-                            style: TextStyle(color: Colors.white),
-                          ),
-                        ),
-                      ),
-                      const Text("You can upgrade this account for Rp1.000"),
-                    ],
                   ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-              child: errorMessage != ""
-                  ? Text(
-                      "Error: $errorMessage",
-                      style: const TextStyle(color: Colors.pink),
-                    )
-                  : const SizedBox(),
+                ),
+              ],
             ),
-            appState.user!.verified != true
-                ? Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        color: Colors.green,
-                      ),
-                      width: MediaQuery.sizeOf(context).width,
-                      child: TextButton(
-                        onPressed: () {
-                          upgrade();
-                        },
-                        style: const ButtonStyle(
-                          foregroundColor: WidgetStatePropertyAll(Colors.white),
-                        ),
-                        child: Text(
-                          loading == false
-                              ? "Upgrade to get Verified Badge"
-                              : "Loading...",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  )
-                : const SizedBox(),
+            const SizedBox(
+              height: 8,
+            ),
             Expanded(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        color: Colors.green.shade50,
-                      ),
-                      width: MediaQuery.sizeOf(context).width,
-                      child: TextButton(
-                        onPressed: () {
-                          refresh();
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: FutureBuilder(
+                  future: postsFuture,
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const CircularProgressIndicator();
+                    } else if (snapshot.hasData) {
+                      final posts = snapshot.data!;
+
+                      return ListView.builder(
+                        itemCount: posts.length,
+                        itemBuilder: (context, index) {
+                          final post = posts[index];
+
+                          return Container(
+                            decoration: BoxDecoration(
+                                color: Colors.grey.shade300,
+                                borderRadius: BorderRadius.circular(20)),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 8,
+                            ),
+                            margin: const EdgeInsets.symmetric(vertical: 4),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  post.title,
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold),
+                                ),
+                                Text(post.content),
+                                const SizedBox(
+                                  height: 8,
+                                ),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      post.authorUsername,
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                    Text(
+                                      DateFormat(
+                                        DateFormat.YEAR_MONTH_DAY,
+                                      ).format(
+                                        DateTime.parse(post.updatedAt),
+                                      ),
+                                      style: TextStyle(
+                                        color: Colors.grey.shade600,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                          );
                         },
-                        style: const ButtonStyle(
-                          foregroundColor: WidgetStatePropertyAll(Colors.green),
-                        ),
-                        child: Text(
-                          loading == false ? "Refresh Data" : "Loading...",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(24),
-                        color: Colors.red.shade50,
-                      ),
-                      width: MediaQuery.sizeOf(context).width,
-                      child: TextButton(
-                        onPressed: () {
-                          delete();
-                        },
-                        style: const ButtonStyle(
-                          foregroundColor: WidgetStatePropertyAll(Colors.red),
-                        ),
-                        child: Text(
-                          loading == false ? "Delete Data" : "Loading...",
-                          style: const TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(
-                    height: 24 * 2,
-                  )
-                ],
+                      );
+                    } else {
+                      return const Text("No post found.");
+                    }
+                  },
+                ),
               ),
             )
           ],
         ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items: const <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+            icon: Icon(Icons.home),
+            label: "Home",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.search),
+            label: "Search",
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.account_circle),
+            label: "Account",
+          ),
+        ],
+        currentIndex: 0,
+        onTap: (value) {
+          if (value == 0) {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => const HomePage(),
+            ));
+          } else if (value == 1) {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => const HomePage(),
+            ));
+          } else if (value == 2) {
+            Navigator.of(context).push(MaterialPageRoute(
+              builder: (context) => const AccountPage(),
+            ));
+          }
+        },
       ),
     );
   }
