@@ -92,11 +92,15 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                   IconButton(
-                    onPressed: () {},
-                    icon: const Icon(
-                      Icons.edit,
-                      color: Colors.green,
-                    ),
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => const AccountPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.account_circle,
+                        color: Colors.green, size: 40),
                   )
                 ],
               ),
@@ -238,7 +242,9 @@ class _HomePageState extends State<HomePage> {
 
                           return Container(
                             decoration: BoxDecoration(
-                                color: Colors.grey.shade300,
+                                color: post.authorUsername == appState.username
+                                    ? Colors.green.shade50
+                                    : Colors.grey.shade200,
                                 borderRadius: BorderRadius.circular(20)),
                             padding: const EdgeInsets.symmetric(
                               horizontal: 24,
@@ -248,10 +254,25 @@ class _HomePageState extends State<HomePage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  post.title,
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold),
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      post.title,
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    post.authorUsername == appState.username
+                                        ? IconButton(
+                                            onPressed: () {},
+                                            icon: const Icon(
+                                              Icons.edit,
+                                              color: Colors.green,
+                                            ),
+                                          )
+                                        : const SizedBox()
+                                  ],
                                 ),
                                 Text(post.content),
                                 const SizedBox(
@@ -269,11 +290,11 @@ class _HomePageState extends State<HomePage> {
                                       ),
                                     ),
                                     Text(
-                                      DateFormat(
+                                      "${post.createdAt != post.updatedAt ? 'edited' : ''} ${DateFormat(
                                         DateFormat.YEAR_MONTH_DAY,
                                       ).format(
                                         DateTime.parse(post.updatedAt),
-                                      ),
+                                      )}",
                                       style: TextStyle(
                                         color: Colors.grey.shade600,
                                         fontSize: 12,
