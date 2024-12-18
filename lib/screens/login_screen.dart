@@ -17,15 +17,16 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
+  final _formKey = GlobalKey<FormState>();
+  final usernameController = TextEditingController();
+  final passwordController = TextEditingController();
+
   String errorMessage = "";
   bool loading = false;
 
   @override
   Widget build(BuildContext context) {
     final appState = AppStateProvider.of(context)?.state;
-
-    final usernameController = TextEditingController();
-    final passwordController = TextEditingController();
 
     Future<void> login() async {
       setState(() {
@@ -54,7 +55,8 @@ class _LoginPageState extends State<LoginPage> {
         if (response.code == 200) {
           appState?.username = usernameController.text;
 
-          Navigator.of(context).push(
+          Navigator.push(
+            context,
             MaterialPageRoute(
               builder: (context) => const OTPPage(),
             ),
@@ -92,152 +94,170 @@ class _LoginPageState extends State<LoginPage> {
           style: TextStyle(fontWeight: FontWeight.w500),
         )),
       ),
-      body: Column(
-        children: [
-          const SizedBox(
-            height: 24,
-          ),
-          const Center(
-            child: Image(
-              image: AssetImage("assets/logo.png"),
-              height: 100,
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 24,
             ),
-          ),
-          const SizedBox(
-            height: 24,
-          ),
-          Text(
-            loading == true ? "Loading..." : "Login",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: Colors.black12,
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide.none,
-                    ),
-                    hintText: "Username",
-                  ),
-                  controller: usernameController,
-                ),
+            const Center(
+              child: Image(
+                image: AssetImage("assets/logo.png"),
+                height: 100,
               ),
             ),
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: Colors.black12,
-              ),
-              child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide.none,
-                    ),
-                    hintText: "Password",
-                  ),
-                  obscureText: true,
-                  controller: passwordController,
-                ),
-              ),
+            const SizedBox(
+              height: 24,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Container(
-              alignment: Alignment.centerRight,
-              child: InkWell(
-                onTap: () {},
-                child: const Text(
-                  "Forgot password?",
-                  style: TextStyle(
-                    color: Colors.pink,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
-              ),
+            Text(
+              loading == true ? "Loading..." : "Login",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-            child: errorMessage != ""
-                ? Text(
-                    "Error: $errorMessage",
-                    style: const TextStyle(color: Colors.pink),
-                  )
-                : const SizedBox(),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: Colors.green,
-              ),
-              width: MediaQuery.sizeOf(context).width,
-              child: TextButton(
-                onPressed: () {
-                  login();
-                },
-                style: const ButtonStyle(
-                  foregroundColor: WidgetStatePropertyAll(Colors.white),
-                ),
-                child: Text(
-                  loading == false ? "Login" : "Loading...",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
+            const SizedBox(
+              height: 8,
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Text("Dont have an account yet?"),
-                const SizedBox(
-                  width: 4,
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.black12,
                 ),
-                InkWell(
-                  onTap: () {
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (context) => const RegisterPage(),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide.none,
                       ),
-                    );
-                  },
+                      hintText: "Username",
+                    ),
+                    controller: usernameController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please enter username";
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(
+              height: 8,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.black12,
+                ),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide.none,
+                      ),
+                      hintText: "Password",
+                    ),
+                    obscureText: true,
+                    controller: passwordController,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please enter password";
+                      }
+                      return null;
+                    },
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Container(
+                alignment: Alignment.centerRight,
+                child: InkWell(
+                  onTap: () {},
                   child: const Text(
-                    "Register here",
+                    "Forgot password?",
                     style: TextStyle(
                       color: Colors.pink,
                       decoration: TextDecoration.underline,
                     ),
                   ),
                 ),
-              ],
+              ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+              child: errorMessage != ""
+                  ? Text(
+                      "Error: $errorMessage",
+                      style: const TextStyle(color: Colors.pink),
+                    )
+                  : const SizedBox(),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.green,
+                ),
+                width: MediaQuery.sizeOf(context).width,
+                child: TextButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      login();
+                    }
+                  },
+                  style: const ButtonStyle(
+                    foregroundColor: WidgetStatePropertyAll(Colors.white),
+                  ),
+                  child: Text(
+                    loading == false ? "Login" : "Loading...",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Text("Dont have an account yet?"),
+                  const SizedBox(
+                    width: 4,
+                  ),
+                  InkWell(
+                    onTap: () {
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const RegisterPage(),
+                        ),
+                      );
+                    },
+                    child: const Text(
+                      "Register here",
+                      style: TextStyle(
+                        color: Colors.pink,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

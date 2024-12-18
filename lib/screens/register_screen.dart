@@ -51,7 +51,8 @@ class _RegisterPageState extends State<RegisterPage> {
       if (response.code == 200) {
         appState?.username = usernameController.text;
 
-        Navigator.of(context).push(
+        Navigator.push(
+          context,
           MaterialPageRoute(
             builder: (context) => const OTPPage(),
           ),
