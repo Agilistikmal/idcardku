@@ -8,7 +8,9 @@ import 'package:idcardku/model/payment_model.dart';
 import 'package:idcardku/model/response_model.dart';
 import 'package:idcardku/model/user_model.dart';
 import 'package:idcardku/screens/home_screen.dart';
+import 'package:idcardku/screens/login_screen.dart';
 import 'package:idcardku/screens/payment_screen.dart';
+import 'package:idcardku/screens/search_screen.dart';
 import 'package:idcardku/service/user_service.dart';
 
 class AccountPage extends StatefulWidget {
@@ -75,7 +77,7 @@ class _AccountPageState extends State<AccountPage> {
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
         title: const Text(
-          "Home",
+          "Account",
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
       ),
@@ -162,6 +164,24 @@ class _AccountPageState extends State<AccountPage> {
                   const SizedBox(
                     height: 8,
                   ),
+                  errorMessage != ""
+                      ? Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.red,
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 2,
+                          ),
+                          margin: const EdgeInsets.only(bottom: 8),
+                          width: MediaQuery.sizeOf(context).width,
+                          child: Text(
+                            errorMessage,
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        )
+                      : const SizedBox(),
                   Form(
                     key: _formKey,
                     child: Column(
@@ -242,10 +262,11 @@ class _AccountPageState extends State<AccountPage> {
                               return null;
                             },
                             controller: phoneController,
+                            keyboardType: TextInputType.phone,
                           ),
                         ),
                         const SizedBox(
-                          height: 8,
+                          height: 16,
                         ),
                         Container(
                           decoration: BoxDecoration(
@@ -258,7 +279,7 @@ class _AccountPageState extends State<AccountPage> {
                               if (_formKey.currentState!.validate()) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(
-                                    content: Text("Creating Post..."),
+                                    content: Text("Saving Data..."),
                                   ),
                                 );
 
@@ -298,6 +319,98 @@ class _AccountPageState extends State<AccountPage> {
                             ),
                           ),
                         ),
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(20),
+                            color: Colors.red,
+                          ),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: TextButton(
+                            onPressed: () async {
+                              try {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const LoginPage(),
+                                  ),
+                                );
+
+                                await deleteUser(user.username);
+
+                                appState.user = null;
+                                appState.username = null;
+                              } catch (err) {
+                                setState(() {
+                                  errorMessage = err.toString();
+                                });
+                              }
+                            },
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.delete,
+                                  color: Colors.white,
+                                ),
+                                SizedBox(
+                                  width: 8,
+                                ),
+                                Text(
+                                  "Delete",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(
+                          height: 8,
+                        ),
+                        Container(
+                          decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(color: Colors.red, width: 2)),
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: TextButton(
+                            onPressed: () async {
+                              appState.user = null;
+                              appState.username = null;
+
+                              Navigator.pushReplacement(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const LoginPage(),
+                                ),
+                              );
+                            },
+                            child: const Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.logout,
+                                  color: Colors.red,
+                                ),
+                                SizedBox(
+                                  width: 8,
+                                ),
+                                Text(
+                                  "Logout",
+                                  style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                      color: Colors.red),
+                                )
+                              ],
+                            ),
+                          ),
+                        ),
                       ],
                     ),
                   )
@@ -332,7 +445,7 @@ class _AccountPageState extends State<AccountPage> {
             ));
           } else if (value == 1) {
             Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => const AccountPage(),
+              builder: (context) => const SearchPage(),
             ));
           } else if (value == 2) {
             Navigator.of(context).push(MaterialPageRoute(

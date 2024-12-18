@@ -16,14 +16,15 @@ class OTPPage extends StatefulWidget {
 }
 
 class _OTPPageState extends State<OTPPage> {
+  final _formKey = GlobalKey<FormState>();
+  final codeController = TextEditingController();
+
   String errorMessage = "";
   bool loading = false;
 
   @override
   Widget build(BuildContext context) {
     final appState = AppStateProvider.of(context)?.state;
-
-    final codeController = TextEditingController();
 
     Future<void> verify() async {
       setState(() {
@@ -71,83 +72,95 @@ class _OTPPageState extends State<OTPPage> {
           style: TextStyle(fontWeight: FontWeight.w500),
         ),
       ),
-      body: Column(
-        children: [
-          const SizedBox(
-            height: 24,
-          ),
-          const Text(
-            "Verify Account",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-          ),
-          Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-              child: Text(
-                "Hi ${appState!.username!}, please check your WhatsApp to get single use code.",
-                textAlign: TextAlign.center,
-              ),
+      body: Form(
+        key: _formKey,
+        child: Column(
+          children: [
+            const SizedBox(
+              height: 24,
             ),
-          ),
-          const SizedBox(
-            height: 8,
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: Colors.black12,
-              ),
+            const Text(
+              "Verify Account",
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            Center(
               child: Padding(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                child: TextField(
-                  decoration: const InputDecoration(
-                    border: UnderlineInputBorder(
-                      borderSide: BorderSide.none,
-                    ),
-                    hintText: "4 digit code",
-                  ),
-                  controller: codeController,
+                child: Text(
+                  "Hi ${appState!.username!}, please check your WhatsApp to get single use code.",
                   textAlign: TextAlign.center,
                 ),
               ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-            child: errorMessage != ""
-                ? Text(
-                    "Error: $errorMessage",
-                    style: const TextStyle(color: Colors.pink),
-                  )
-                : const SizedBox(),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-            child: Container(
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(24),
-                color: Colors.green,
-              ),
-              width: MediaQuery.sizeOf(context).width,
-              child: TextButton(
-                onPressed: () {
-                  verify();
-                },
-                style: const ButtonStyle(
-                  foregroundColor: WidgetStatePropertyAll(Colors.white),
+            const SizedBox(
+              height: 8,
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.black12,
                 ),
-                child: Text(
-                  loading == false ? "Verify" : "Loading...",
-                  style: const TextStyle(
-                      fontWeight: FontWeight.bold, fontSize: 16),
+                child: Padding(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+                  child: TextFormField(
+                    decoration: const InputDecoration(
+                      border: UnderlineInputBorder(
+                        borderSide: BorderSide.none,
+                      ),
+                      hintText: "4 digit code",
+                    ),
+                    controller: codeController,
+                    textAlign: TextAlign.center,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "Please enter the code";
+                      }
+                      return null;
+                    },
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
+              child: errorMessage != ""
+                  ? Text(
+                      "Error: $errorMessage",
+                      style: const TextStyle(color: Colors.pink),
+                    )
+                  : const SizedBox(),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(24),
+                  color: Colors.green,
+                ),
+                width: MediaQuery.sizeOf(context).width,
+                child: TextButton(
+                  onPressed: () {
+                    if (_formKey.currentState!.validate()) {
+                      verify();
+                    }
+                  },
+                  style: const ButtonStyle(
+                    foregroundColor: WidgetStatePropertyAll(Colors.white),
+                  ),
+                  child: Text(
+                    loading == false ? "Verify" : "Loading...",
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

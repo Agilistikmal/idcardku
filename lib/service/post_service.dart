@@ -26,6 +26,25 @@ Future<List<Post>> findPosts() async {
   }
 }
 
+Future<Post> findPost(String id) async {
+  final rawResponse = await http
+      .get(
+        Uri.parse("${AppConfig.apiUrl}/post/$id"),
+      )
+      .timeout(
+        const Duration(seconds: 5),
+      );
+
+  final Map parseResponse = json.decode(rawResponse.body);
+  final response = APIResponse.fromJson(parseResponse);
+
+  if (response.code == 200) {
+    return Post.fromJson(response.data);
+  } else {
+    throw Exception("Failed to fetch post");
+  }
+}
+
 Future<Post> createPost(
   String title,
   String content,
@@ -51,5 +70,50 @@ Future<Post> createPost(
     return response.data;
   } else {
     throw Exception("Failed to create post");
+  }
+}
+
+Future<Post> updatePost(
+  String id,
+  String title,
+  String content,
+) async {
+  final rawResponse = await http
+      .patch(
+        Uri.parse("${AppConfig.apiUrl}/post/$id"),
+        body: jsonEncode({"title": title, "content": content}),
+      )
+      .timeout(
+        const Duration(seconds: 5),
+      );
+
+  final Map parseResponse = json.decode(rawResponse.body);
+  final response = APIResponse.fromJson(parseResponse);
+
+  if (response.code == 200) {
+    return response.data;
+  } else {
+    throw Exception("Failed to update post");
+  }
+}
+
+Future<Post> deletePost(
+  String id,
+) async {
+  final rawResponse = await http
+      .delete(
+        Uri.parse("${AppConfig.apiUrl}/post/$id"),
+      )
+      .timeout(
+        const Duration(seconds: 5),
+      );
+
+  final Map parseResponse = json.decode(rawResponse.body);
+  final response = APIResponse.fromJson(parseResponse);
+
+  if (response.code == 200) {
+    return response.data;
+  } else {
+    throw Exception("Failed to delete post");
   }
 }

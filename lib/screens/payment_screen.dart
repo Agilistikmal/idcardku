@@ -6,6 +6,7 @@ import 'package:idcardku/main.dart';
 import 'package:idcardku/model/payment_model.dart';
 import 'package:idcardku/model/response_model.dart';
 import 'package:idcardku/model/user_model.dart';
+import 'package:idcardku/screens/account_screen.dart';
 import 'package:idcardku/service/user_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:http/http.dart' as http;
@@ -51,7 +52,12 @@ class _PaymentPageState extends State<PaymentPage> {
           User user = await findUser(appState!.username!);
           appState.user = user;
 
-          Navigator.of(context).pop();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => const AccountPage(),
+            ),
+          );
         }
       } else {
         setState(() {

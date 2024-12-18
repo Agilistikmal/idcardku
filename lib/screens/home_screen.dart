@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'package:idcardku/main.dart';
 import 'package:idcardku/model/post_model.dart';
 import 'package:idcardku/screens/account_screen.dart';
+import 'package:idcardku/screens/post_screen.dart';
+import 'package:idcardku/screens/search_screen.dart';
 import 'package:idcardku/service/post_service.dart';
 import 'package:intl/intl.dart';
 
@@ -265,7 +267,15 @@ class _HomePageState extends State<HomePage> {
                                     ),
                                     post.authorUsername == appState.username
                                         ? IconButton(
-                                            onPressed: () {},
+                                            onPressed: () {
+                                              Navigator.push(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (context) =>
+                                                      PostPage(id: post.id),
+                                                ),
+                                              );
+                                            },
                                             icon: const Icon(
                                               Icons.edit,
                                               color: Colors.green,
@@ -340,7 +350,7 @@ class _HomePageState extends State<HomePage> {
             ));
           } else if (value == 1) {
             Navigator.of(context).push(MaterialPageRoute(
-              builder: (context) => const HomePage(),
+              builder: (context) => const SearchPage(),
             ));
           } else if (value == 2) {
             Navigator.of(context).push(MaterialPageRoute(
