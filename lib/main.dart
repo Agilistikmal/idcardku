@@ -17,10 +17,11 @@ class AppState {
 class AppStateProvider extends InheritedWidget {
   final AppState state;
 
-  AppStateProvider({
+  const AppStateProvider({
+    super.key,
     required this.state,
-    required Widget child,
-  }) : super(child: child);
+    required super.child,
+  });
 
   static AppStateProvider? of(BuildContext context) {
     return context.dependOnInheritedWidgetOfExactType<AppStateProvider>();
